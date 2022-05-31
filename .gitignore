@@ -1,3 +1,4 @@
 secret.json
 *tmp.py
 *.json
+__pycache__
