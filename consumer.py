@@ -11,7 +11,7 @@ db = mongoclient.twitto
 
 # Setup Kafka consumer
 consumer = KafkaConsumer(
-    'bbdb',
+    'twitto',
     bootstrap_servers=['localhost:9092'],
     value_deserializer=lambda x: json.loads(x.decode('utf-8'))
     )
@@ -29,4 +29,4 @@ for message in consumer:
     
     # save in mongodb
     result = db.test.insert_one(tweet)
-    print(f'Created {result.inserted_id} with score {c_score}')
+    print(f'Inserted {result.inserted_id} with score {c_score}')
