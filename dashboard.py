@@ -1,18 +1,19 @@
 import dash
-from dash.dependencies import Output,Input
-import dash_core_components as dcc
-import dash_html_components as html
 import plotly
 import plotly.graph_objs as go
+
+from dash.dependencies import Output,Input
+from dash import dcc
+from dash import html
 from pymongo import MongoClient
-import pandas as pd
-import math
-from numpy import nan
+
+client = MongoClient(host=["localhost:27017"])
+db = client.twitto
 
 app = dash.Dash()
 app.layout = html.Div(
     [   html.H2('Live Twitter Sentiment'),
-        dcc.Graph(id='live-graph', animate=True),
+        dcc.Graph(id='new-tweet-score', animate=True),
         dcc.Interval(
             id='graph-update',
             interval=1*1000
@@ -20,43 +21,34 @@ app.layout = html.Div(
     ]
 )
 
-@app.callback(Output('live-graph', 'figure'),
+@app.callback(Output('new-tweet-score', 'figure'),
               [Input('graph-update', 'n_intervals')])
-
 def update_graph_scatter(input_data):
     ''' Fonction de mise à jour du graph 
     Il faut être connecté à MongoDB
     Pour être en temps réel : il faut que le 
     consummer.py soit en route ( et donc le producter.py aussi ) '''
+
+    N_TWEETS = 100
     
     try:
-        mongoclient = MongoClient(port=27017)
-        db = mongoclient.twitto
-
-        #Creation de la requete de selection des enregistremetns sur la base mongodb.test
-        df = pd.DataFrame(list(db.test.find()))
-        df = df.dropna(subset=['score'])
-
-        df["id"] = pd.to_numeric(df["id"])
-
-        df.sort_values('id', inplace=True)
-
-        # rolling : mise à l'échelle des identifiants pour plus de visibilité
-        df['id'] = df['id'].rolling(int(len(df)/5)).mean()
+        # Nos axes prennent en comptes les N derniers tweets
+        query = db.test\
+            .find({}, {"score":1})\
+            .sort("id")\
+            .limit(N_TWEETS)
     
-        # Nos axes prennent en comptes les 100 dernieres valeurs
-        X = df.id.values[-100:] 
-        Y = df.score.values[-100:]
-        
-        data = plotly.graph_objs.Scatter(
-                x= list(X),
-                y= list(Y),
-                name='Scatter',
-                mode= 'lines+markers'
+        data = plotly.graph_objs.Bar(
+                x=[i for i in range(N_TWEETS)],
+                y=[i['score'] for i in query],
+                name='Last tweets score',
                 )
 
-        return {'data': [data],'layout' : go.Layout(xaxis=dict(range=[min(X),max(X)]),
-                                                    yaxis=dict(range=[min(Y),max(Y)]),)}
+        return { 'data': [data],'layout' : go.Layout(
+                    xaxis=dict(range=[0,N_TWEETS]),
+                    yaxis=dict(range=[-10, 10]),
+                    )
+                }
 
     #Erreurs renvoyees dans le fichier errors.txt
     except Exception as e:
@@ -67,4 +59,4 @@ def update_graph_scatter(input_data):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=True, port=6969)
