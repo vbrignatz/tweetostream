@@ -8,12 +8,12 @@ with open("secret.json", "r") as secrets:
     keys = json.load(secrets)
 
 # TODO: find a better solution
-# SLEEP_TIME = 10
-# print(f"Waiting {SLEEP_TIME}s for services to start...")
-# sleep(SLEEP_TIME)
-# print("Starting ...")
+SLEEP_TIME = 10
+print(f"Waiting {SLEEP_TIME}s for services to start...")
+sleep(SLEEP_TIME)
+print("Starting ...")
 
-producer = KafkaProducer(bootstrap_servers=['localhost:9092'])
+producer = KafkaProducer(bootstrap_servers=['kafka_server:9092'])
 
 
 class MyStream(tweepy.StreamingClient):
