@@ -1,28 +1,31 @@
-# Start the servers
+# Usage
 
-To start the kafka, zookeeper and mongodb services, install docker ([see here](https://docs.docker.com/get-docker/)) and run :
+## Docker
+You first need to install docker ([see here](https://docs.docker.com/get-docker/)).
+
+## Build
+
+To build the app, use
+```
+docker-compose build
+```
+
+This will build the producer and consumer containers.
+
+## Run
+
+To start the app, use
 ```
 docker-compose up
 ```
 
-Two port will be used on your local computer :
- - `27018` for mongodb
- - `9092`  for kafka
+This will launch the kafka, zookeeper and mongodb containers as well as the producer and consumer container.
 
+You can connect to the mongo database on the port `27018`.
 A volume will be set in `./data/mongo` for persistent storage 
 
 
-# Program
-
-Launch the producer with :
-```
-python3 producer.py
-```
-
-Launch the consumer with :
-```
-python3 consumer.py
-```
+## Program
 
 The producer will get the latest tweets with the choosen keyword and put them in the kafka topic `twitto`.
 The consumer will get the tweets from kafka, add a score reflecting the sentiment in the text, and store them in MongoDB. 
