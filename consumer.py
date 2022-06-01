@@ -6,7 +6,7 @@ from kafka import KafkaConsumer
 from pymongo import MongoClient
 
 # Connect to MongoDB
-mongoclient = MongoClient(port=27017)
+mongoclient = MongoClient(host=['localhost:27018'])
 db = mongoclient.twitto
 
 # Setup Kafka consumer
