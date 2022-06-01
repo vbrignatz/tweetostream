@@ -36,6 +36,6 @@ class MyStream(tweepy.StreamingClient):
     def on_connection_error(self):
         self.disconnect()
 
-streaming_client = MyStream(keys["twitter_api_v2"]["bearer_token"])
+streaming_client = MyStream(keys["vincent_api"]["bearer_token"])
 streaming_client.add_rules(tweepy.StreamRule(' '.join(args.query)))
 streaming_client.filter(tweet_fields=TWEET_FIELDS + args.fields)

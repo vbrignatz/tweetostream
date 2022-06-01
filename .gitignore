@@ -2,4 +2,4 @@ secret.json
 *tmp.py
 *.json
 __pycache__
-errors.txt
+*.log
