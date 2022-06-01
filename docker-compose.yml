@@ -32,7 +32,28 @@ services:
       - zookeeper
     networks:
       - twitto
-
+  producer:
+    build:
+      context: ./
+      dockerfile: ./producer/Dockerfile
+    image: producer
+    container_name: producer
+    networks:
+      - twitto
+    depends_on: 
+      - mongodb
+      - kafka
+  consumer:
+    build: 
+      context: ./
+      dockerfile: ./consumer/Dockerfile
+    image: consumer
+    container_name: consumer
+    networks:
+      - twitto
+    depends_on:
+      - mongodb
+      - kafka
 
 networks:
   twitto:

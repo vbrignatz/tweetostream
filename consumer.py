@@ -4,15 +4,22 @@ import json
 
 from kafka import KafkaConsumer
 from pymongo import MongoClient
+from time import sleep
+
+# TODO: find a better solution
+SLEEP_TIME = 10
+print(f"Waiting {SLEEP_TIME}s for services to start...")
+sleep(SLEEP_TIME)
+print("Starting ...")
 
 # Connect to MongoDB
-mongoclient = MongoClient(host=['localhost:27018'])
+mongoclient = MongoClient(host=['mongo_server:27018'])
 db = mongoclient.twitto
 
 # Setup Kafka consumer
 consumer = KafkaConsumer(
     'twitto',
-    bootstrap_servers=['localhost:9092'],
+    bootstrap_servers=['kafka_server:9092'],
     value_deserializer=lambda x: json.loads(x.decode('utf-8'))
     )
 
