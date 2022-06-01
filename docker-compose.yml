@@ -1,0 +1,39 @@
+version: "3.3"
+
+services:
+  mongodb:
+    image: mongo
+    container_name: mongo_server
+    ports:
+      - '27018:27017'
+    networks:
+      - twitto
+    volumes:
+      - ./data/mongo:/data/db
+  zookeeper:
+    image: 'bitnami/zookeeper:latest'
+    container_name: zk_server
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    networks:
+      - twitto
+  kafka:
+    image: 'bitnami/kafka:latest'
+    container_name: kafka_server
+    ports:
+      - '9092:9092'
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://127.0.0.1:9092
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zk_server:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    depends_on:
+      - zookeeper
+    networks:
+      - twitto
+
+
+networks:
+  twitto:
+    driver: bridge
