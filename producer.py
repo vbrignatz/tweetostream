@@ -18,8 +18,8 @@ producer = KafkaProducer(bootstrap_servers=['kafka_server:9092'])
 
 class MyStream(tweepy.StreamingClient):
     def on_tweet(self, data):
-        producer.send("twitto", value=json.dumps(data.data).encode('utf-8'))
-        print(data.id)
+        res = producer.send("twitto", value=json.dumps(data.data).encode('utf-8'))
+        print(f"Sent {data.id} [{res}]")
         return True
     
     def on_connection_error(self):
