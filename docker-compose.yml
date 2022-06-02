@@ -62,7 +62,7 @@ services:
     image: dashboard
     container_name: dashboard
     ports:
-      - '8085:8085'
+      - '6969:8085'
     environment:
       - NGINX_WORKER_PROCESSES=auto
     networks:

@@ -4,6 +4,7 @@ import plotly.graph_objs as go
 import argparse
 import threading
 import json
+import datetime
 
 from time import sleep
 from scorer import Scorer
@@ -41,7 +42,6 @@ app.layout = html.Div(
     ]
 )
 
-
 class Consumer(threading.Thread):
     consumer_stop = threading.Event()
 
@@ -49,23 +49,31 @@ class Consumer(threading.Thread):
         super().__init__()
         # the real time queue containing the lastest tweets
         self.tweet_queue = []
-        self.max_size = 100
+        self.max_queue_size = 100
 
-        # a list that contains always args.N tweets
-        self.N_tweets = [] 
-        self.c_tweet_id = 0
+        self.recent_tweets = []
+
+        self.end_time = datetime.datetime.now()
+        self.history_time = args.N # seconds
+        self.start_time = datetime.datetime.now() - datetime.timedelta(seconds=self.history_time)
+
 
     def update(self):
         # take the content of tweet_queue
-        c_tweets, self.tweet_queue = self.tweet_queue, []
-        self.c_tweet_id += len(c_tweets) # if c_tweet_id too large ?
+        self.recent_tweets, self.tweet_queue = self.recent_tweets + self.tweet_queue, []
 
-        # add the new tweets to the last N
-        self.N_tweets = self.N_tweets + c_tweets
-        # remove the oldest ones
-        self.N_tweets = self.N_tweets[-args.N:]
+        # update current time
+        self.end_time = self.recent_tweets[-1]["datetime"]
+        self.start_time = self.end_time - datetime.timedelta(seconds=self.history_time)
 
-        return self.N_tweets
+        # delete old data
+        for i in range(len(self.recent_tweets)):
+            if self.recent_tweets[i]["datetime"] > self.start_time:
+                break
+        self.recent_tweets = self.recent_tweets[i:]
+
+        # return recent tweets
+        return self.recent_tweets
 
     def run(self):
         consumer = KafkaConsumer(
@@ -78,8 +86,11 @@ class Consumer(threading.Thread):
         self.invalid = 0
 
         for message in consumer:
-            self.tweet_queue.append(message.value)
-            if len(self.tweet_queue) > self.max_size:
+            
+            tweet = message.value
+            tweet["datetime"] = datetime.datetime.strptime(tweet["created_at"], '%Y-%m-%dT%H:%M:%S.000Z') # 2022-05-31T13:30:48.000Z
+            self.tweet_queue.append(tweet)
+            if len(self.tweet_queue) > self.max_queue_size:
                 self.tweet_queue.pop(0)
 
             if Consumer.consumer_stop.is_set():
@@ -95,19 +106,22 @@ def update_graph_scatter(input_data):
     Pour être en temps réel : il faut que le 
     consummer.py soit en route ( et donc le producter.py aussi ) '''
 
-    
     try:
-        scores = [s.score(d["text"]) for d in thread.update()]
+        tweets = thread.update()
 
-        data = plotly.graph_objs.Bar(
-                x=[i for i in range(thread.c_tweet_id, thread.c_tweet_id+len(scores))],
-                y=scores,
-                name='Last tweets score',
+        X = [t["datetime"] for t in tweets]
+        Y = [s.score(t["text"]) for t in tweets]
+
+        data = plotly.graph_objs.Scatter(
+                x = X ,
+                y = Y ,
+                name = 'Scatter',
+                mode = 'markers'
                 )
 
         return { 'data': [data],'layout' : go.Layout(
-                    xaxis=dict(range=[thread.c_tweet_id, thread.c_tweet_id+len(scores)]),
-                    yaxis=dict(range=[-10, 10]),
+                    xaxis=dict(range=[thread.start_time, thread.end_time]),
+                    yaxis=dict(range=[-20, 20]),
                     )
                 }
 
@@ -115,9 +129,7 @@ def update_graph_scatter(input_data):
     except Exception as e:
         with open(args.log,'a') as f:
             f.write(str(e))
-            f.write('\n') 
-
-
+            f.write('\n')
 
 if __name__ == '__main__':
     # TODO: find a better solution
