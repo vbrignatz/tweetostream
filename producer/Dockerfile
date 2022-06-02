@@ -4,4 +4,4 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade -r ./requirements.txt
 COPY producer.py .
 COPY secret.json .
-CMD ["python3", "-u", "producer.py"]
+CMD ["python3", "-u", "producer.py", "covid", "lang:en", "--host", "kafka_server", "--port", "9092", "--topic", "covid"]

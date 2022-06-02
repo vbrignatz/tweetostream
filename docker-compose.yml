@@ -55,7 +55,21 @@ services:
     depends_on:
       - mongodb
       - kafka
-
+  dashboard:
+    build: 
+      context: ./
+      dockerfile: ./dashboard/Dockerfile
+    image: dashboard
+    container_name: dashboard
+    ports:
+      - '8085:8085'
+    environment:
+      - NGINX_WORKER_PROCESSES=auto
+    networks:
+      - twitto
+    depends_on:
+      - mongodb
+      - kafka
 networks:
   twitto:
     driver: bridge
