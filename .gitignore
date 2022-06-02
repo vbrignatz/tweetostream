@@ -4,3 +4,4 @@ secret.json
 *.json
 __pycache__/
 data/
+*.log
