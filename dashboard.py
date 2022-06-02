@@ -28,7 +28,7 @@ def update_graph_scatter(input_data):
     Il faut être connecté à MongoDB
     Pour être en temps réel : il faut que le 
     consummer.py soit en route ( et donc le producter.py aussi ) '''
-    
+
     try:
         mongoclient = MongoClient(port=27017)
         db = mongoclient.twitto
@@ -37,22 +37,23 @@ def update_graph_scatter(input_data):
         df = pd.DataFrame(list(db.test.find()))
         df = df.dropna(subset=['score'])
 
-        df["id"] = pd.to_numeric(df["id"])
+        df["datetime"] = pd.to_datetime(df['created_at'])
+        df["time"] = df["datetime"].apply(lambda x: x.time())
+        #df["day"]  = df["datetime"].apply(lambda x: x.date())
+        #df["timestamp"] = df["datetime"].apply(lambda x: x.timestamp())
+        #print(df["time"].values)
 
-        df.sort_values('id', inplace=True)
-
-        # rolling : mise à l'échelle des identifiants pour plus de visibilité
-        df['id'] = df['id'].rolling(int(len(df)/5)).mean()
+        df.sort_values('time', inplace=True)
     
         # Nos axes prennent en comptes les 100 dernieres valeurs
-        X = df.id.values[-100:] 
+        X = df["time"].values[-100:]
         Y = df.score.values[-100:]
         
         data = plotly.graph_objs.Scatter(
-                x= list(X),
-                y= list(Y),
+                x=  X ,
+                y=  Y ,
                 name='Scatter',
-                mode= 'lines+markers'
+                mode= 'markers'
                 )
 
         return {'data': [data],'layout' : go.Layout(xaxis=dict(range=[min(X),max(X)]),
