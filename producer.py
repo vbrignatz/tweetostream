@@ -14,6 +14,7 @@ TWEET_FIELDS=[
     # "retweet_count",
 ]
 
+# Argument parsing
 parser = argparse.ArgumentParser(description='Fetch some tweets and upload them in kafka')
 parser.add_argument('--port', type=int, default=9092, help="Kafka port")
 parser.add_argument('--host', type=str, default="localhost", help="Kafka hostname")
@@ -23,6 +24,7 @@ parser.add_argument('query', nargs='+', type=str, help="The query to filter the 
 parser.add_argument('--fields', nargs='+', default=[], type=str)
 args = parser.parse_args()
 
+# loading api keys
 with open(args.secret, "r") as secrets:
     keys = json.load(secrets)
 
@@ -32,9 +34,10 @@ print(f"Waiting {SLEEP_TIME}s for services to start...")
 sleep(SLEEP_TIME)
 print("Starting ...")
 
+# Init the producer
 producer = KafkaProducer(bootstrap_servers=[f'{args.host}:{args.port}'])
 
-
+# Create child class or tweepy Streaming Client
 class MyStream(tweepy.StreamingClient):
     def on_tweet(self, data):
         res = producer.send(args.topic, value=json.dumps(data.data).encode('utf-8'))
@@ -44,6 +47,7 @@ class MyStream(tweepy.StreamingClient):
     def on_connection_error(self):
         self.disconnect()
 
+# Launching the streaming client
 streaming_client = MyStream(keys["vincent_api"]["bearer_token"])
 streaming_client.add_rules(tweepy.StreamRule(' '.join(args.query)))
 streaming_client.filter(tweet_fields=TWEET_FIELDS + args.fields)

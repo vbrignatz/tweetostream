@@ -14,6 +14,7 @@ from dash import dcc
 from dash import html
 from pymongo import MongoClient
 
+# Argument parsing
 parser = argparse.ArgumentParser(description='Fetch some tweets and upload them in kafka')
 parser.add_argument('--kafkaport', type=int, default=9092, help="Kafka port")
 parser.add_argument('--kafkahost', type=str, default="localhost", help="Kafka hostname")
@@ -26,11 +27,14 @@ parser.add_argument('--log', type=str, default="errors.log", help="log file")
 parser.add_argument('N', type=int, default=100, help="The number of recent tweets to add in graph.")
 args = parser.parse_args()
 
+# Scorer definition
 s = Scorer()
 
+# Connection to mongoDB 
 client = MongoClient(host=[f'{args.mongohost}:{args.mongoport}'])
 db = client.twitto
 
+# Definition of Dash app
 app = dash.Dash()
 app.layout = html.Div(
     [   html.H2('Live Twitter Sentiment'),
@@ -42,6 +46,7 @@ app.layout = html.Div(
     ]
 )
 
+# Class Consumer to run in background thread
 class Consumer(threading.Thread):
     consumer_stop = threading.Event()
 
@@ -51,6 +56,7 @@ class Consumer(threading.Thread):
         self.tweet_queue = []
         self.max_queue_size = 100
 
+        # queue containing tweets from start_time to end_time
         self.recent_tweets = []
 
         self.end_time = datetime.datetime.now()
@@ -76,20 +82,25 @@ class Consumer(threading.Thread):
         return self.recent_tweets
 
     def run(self):
+        # function ran by thread
+
+        # init consumer
         consumer = KafkaConsumer(
             args.topic,
             bootstrap_servers=[f'{args.kafkahost}:{args.kafkaport}'],
             value_deserializer=lambda x: json.loads(x.decode('utf-8'))
             )
-        # consumer.subscribe(['twitto'])
-        self.valid = 0
-        self.invalid = 0
 
+        # main loop
         for message in consumer:
             
             tweet = message.value
+            # adding datetime
             tweet["datetime"] = datetime.datetime.strptime(tweet["created_at"], '%Y-%m-%dT%H:%M:%S.000Z') # 2022-05-31T13:30:48.000Z
+
+            # adding to queue
             self.tweet_queue.append(tweet)
+            # freeing space if needed
             if len(self.tweet_queue) > self.max_queue_size:
                 self.tweet_queue.pop(0)
 
@@ -107,11 +118,14 @@ def update_graph_scatter(input_data):
     consummer.py soit en route ( et donc le producter.py aussi ) '''
 
     try:
+        # get latest tweets
         tweets = thread.update()
 
+        # setup axis
         X = [t["datetime"] for t in tweets]
         Y = [s.score(t["text"]) for t in tweets]
 
+        # plotting data
         data = plotly.graph_objs.Scatter(
                 x = X ,
                 y = Y ,

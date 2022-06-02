@@ -13,6 +13,7 @@ print(f"Waiting {SLEEP_TIME}s for services to start...")
 sleep(SLEEP_TIME)
 print("Starting ...")
 
+# Argument parsing
 parser = argparse.ArgumentParser(description='Fetch some tweets and upload them in kafka')
 parser.add_argument('--kafkaport', type=int, default=9092, help="Kafka port")
 parser.add_argument('--kafkahost', type=str, default="localhost", help="Kafka hostname")
@@ -36,7 +37,6 @@ consumer = KafkaConsumer(
 s = Scorer()
 
 # Main loop
-
 for message in consumer:
     # get tweet
     tweet = message.value
