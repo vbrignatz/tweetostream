@@ -17,6 +17,7 @@ parser.add_argument('--kafkaport', type=int, default=9092, help="Kafka port")
 parser.add_argument('--kafkahost', type=str, default="localhost", help="Kafka hostname")
 parser.add_argument('--mongohost', type=str, default="localhost", help="Mongo hostname")
 parser.add_argument('--mongoport', type=int, default=27017, help="Mongo port")
+parser.add_argument('-t', '--topic', type=str, default="twitto", help="The name of the topic. Carefull, this should be the same in producer.py")
 parser.add_argument('-p', '--port', type=int, default=8085, help="Dash port")
 parser.add_argument('--log', type=str, default="errors.log", help="log file")
 
@@ -45,16 +46,33 @@ class Consumer(threading.Thread):
 
     def __init__(self) -> None:
         super().__init__()
+        # the real time queue containing the lastest tweets
         self.tweet_queue = []
         self.max_size = 100
 
+        # a list that contains always args.N tweets
+        self.N_tweets = [] 
+        self.c_tweet_id = 0
+
+    def update(self):
+        # take the content of tweet_queue
+        c_tweets, self.tweet_queue = self.tweet_queue, []
+        self.c_tweet_id += len(c_tweets) # if c_tweet_id too large ?
+
+        # add the new tweets to the last N
+        self.N_tweets = self.N_tweets + c_tweets
+        # remove the oldest ones
+        self.N_tweets = self.N_tweets[-args.N:]
+
+        return self.N_tweets
+
     def run(self):
         consumer = KafkaConsumer(
-             "twitto",
+            args.topic,
             bootstrap_servers=[f'{args.kafkahost}:{args.kafkaport}'],
             value_deserializer=lambda x: json.loads(x.decode('utf-8'))
             )
-        consumer.subscribe(['twitto'])
+        # consumer.subscribe(['twitto'])
         self.valid = 0
         self.invalid = 0
 
@@ -68,9 +86,6 @@ class Consumer(threading.Thread):
 
         consumer.close()
 
-N_tweets = []
-c_tweet_id = 0
-
 @app.callback(Output('new-tweet-score', 'figure'),
               [Input('graph-update', 'n_intervals')])
 def update_graph_scatter(input_data):
@@ -81,35 +96,21 @@ def update_graph_scatter(input_data):
 
     
     try:
-        global N_tweets
-        global c_tweet_id
-
-        c_tweets = []
-        for i in range(args.N):
-            if len(thread.tweet_queue) > 0:
-                c_tweets.append(thread.tweet_queue.pop(0))
-            else:
-                break
-
-        c_tweet_id += len(c_tweets)
-        N_tweets = N_tweets + c_tweets
-        N_tweets = N_tweets[-args.N:]
-
-        scores = [s.score(d["text"]) for d in N_tweets]
+        scores = [s.score(d["text"]) for d in thread.update()]
 
         data = plotly.graph_objs.Bar(
-                x=[i for i in range(c_tweet_id, c_tweet_id+len(scores))],
+                x=[i for i in range(thread.c_tweet_id, thread.c_tweet_id+len(scores))],
                 y=scores,
                 name='Last tweets score',
                 )
 
         return { 'data': [data],'layout' : go.Layout(
-                    xaxis=dict(range=[c_tweet_id, c_tweet_id+len(scores)]),
+                    xaxis=dict(range=[thread.c_tweet_id, thread.c_tweet_id+len(scores)]),
                     yaxis=dict(range=[-10, 10]),
                     )
                 }
 
-    # Erreurs renvoyees dans le fichier errors.txt
+    # Erreurs renvoyees dans le fichier log
     except Exception as e:
         with open(args.log,'a') as f:
             f.write(str(e))
