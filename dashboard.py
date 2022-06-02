@@ -5,6 +5,7 @@ import argparse
 import threading
 import json
 
+from time import sleep
 from scorer import Scorer
 from kafka import KafkaConsumer
 from dash.dependencies import Output,Input
@@ -119,10 +120,16 @@ def update_graph_scatter(input_data):
 
 
 if __name__ == '__main__':
+    # TODO: find a better solution
+    SLEEP_TIME = 10
+    print(f"Waiting {SLEEP_TIME}s for services to start...")
+    sleep(SLEEP_TIME)
+    print("Starting ...")
+
     try:
         thread = Consumer()
         thread.start()
-        app.run_server(debug=True, port=args.port)
+        app.run_server(debug=True, host="0.0.0.0", port=args.port)
     except KeyboardInterrupt:
         print("Stopping")
     finally:

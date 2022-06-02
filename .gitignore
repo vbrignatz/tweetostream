@@ -1,5 +1,7 @@
 secret.json
 *tmp.py
+*.tmp
 *.json
-__pycache__
+__pycache__/
+data/
 *.log

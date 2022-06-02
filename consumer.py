@@ -5,6 +5,13 @@ import argparse
 
 from kafka import KafkaConsumer
 from pymongo import MongoClient
+from time import sleep
+
+# TODO: find a better solution
+SLEEP_TIME = 10
+print(f"Waiting {SLEEP_TIME}s for services to start...")
+sleep(SLEEP_TIME)
+print("Starting ...")
 
 parser = argparse.ArgumentParser(description='Fetch some tweets and upload them in kafka')
 parser.add_argument('--kafkaport', type=int, default=9092, help="Kafka port")
@@ -29,6 +36,7 @@ consumer = KafkaConsumer(
 s = Scorer()
 
 # Main loop
+
 for message in consumer:
     # get tweet
     tweet = message.value

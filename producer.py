@@ -3,6 +3,8 @@ import json
 import argparse
 
 from kafka import KafkaProducer
+from kafka.errors import NoBrokersAvailable
+from time import sleep
 
 TWEET_FIELDS=[
     "created_at",
@@ -24,13 +26,19 @@ args = parser.parse_args()
 with open(args.secret, "r") as secrets:
     keys = json.load(secrets)
 
+# TODO: find a better solution
+SLEEP_TIME = 10
+print(f"Waiting {SLEEP_TIME}s for services to start...")
+sleep(SLEEP_TIME)
+print("Starting ...")
+
 producer = KafkaProducer(bootstrap_servers=[f'{args.host}:{args.port}'])
 
 
 class MyStream(tweepy.StreamingClient):
     def on_tweet(self, data):
-        producer.send(args.topic, value=json.dumps(data.data).encode('utf-8'))
-        print(data.id)
+        res = producer.send(args.topic, value=json.dumps(data.data).encode('utf-8'))
+        print(f"Sent {data.id} [{res}]")
         return True
     
     def on_connection_error(self):
