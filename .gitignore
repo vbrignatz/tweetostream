@@ -2,3 +2,6 @@ secret.json
 *tmp.py
 *.json
 __pycache__
+parc
+.idea
+check
