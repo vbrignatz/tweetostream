@@ -1,28 +1,29 @@
-from ast import Starred
-from doctest import master
-from lib2to3.pgen2.pgen import DFAState
+
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
-from pyspark.sql.types import StringType, StructType, StructField
+from pyspark.sql.types import StringType, StructType
 from pyspark.sql.types import *
 from pyspark.sql.functions import col, split
 from pyspark.sql import functions as F
 from scorer import Scorer, getscore
 from pymongo import MongoClient
+import argparse
 
-
+# Argument parsing
+parser = argparse.ArgumentParser(description='Fetch some tweets and upload them in spark')
+parser.add_argument('--sparkport', type=int, default=9092, help="Kafka port")
+parser.add_argument('--sparkhost', type=str, default="localhost", help="Kafka hostname")
+parser.add_argument('-t', '--topic', type=str, default="twitto", help="The name of the topic. Carefull, this should be the same in producer.py")
+args = parser.parse_args()
 
 
 spark = SparkSession.\
         builder.\
-        appName("streamingExampleWrite").\
+        appName("Sparktostream").\
         config('spark.jars.packages', 'org.mongodb.spark:mongo-spark-connector:10.0.0').\
         config('spark.jars.packages', 'org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.0').\
         getOrCreate()
 
-
-
-        
 
 
 spark.sparkContext.setLogLevel("ERROR")
@@ -30,8 +31,8 @@ spark.sparkContext.setLogLevel("ERROR")
 df = spark \
     .readStream \
     .format("kafka") \
-    .option("kafka.bootstrap.servers", "localhost:9092") \
-    .option("subscribe", "twitto") \
+    .option("kafka.bootstrap.servers",f"{args.sparkhost}:{args.sparkport}") \
+    .option("subscribe", f"{args.topic}") \
     .load()
 
 sc = Scorer()
