@@ -17,7 +17,7 @@ class MyStream(tweepy.StreamingClient):
     def on_connection_error(self):
         self.disconnect()
 
-streaming_client = MyStream(keys["vincent_api"]["bearer_token"])
+streaming_client = MyStream(keys["aure_api"]["bearer_token"])
 
 streaming_client.add_rules(tweepy.StreamRule('covid'))
-streaming_client.filter(tweet_fields=["created_at", "text"])
+streaming_client.filter(tweet_fields=["created_at","text"])
