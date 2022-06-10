@@ -10,9 +10,9 @@ from pymongo import MongoClient
 import argparse
 
 # Argument parsing
-parser = argparse.ArgumentParser(description='Fetch some tweets and upload them in spark')
-parser.add_argument('--sparkport', type=int, default=9092, help="Kafka port")
-parser.add_argument('--sparkhost', type=str, default="localhost", help="Kafka hostname")
+parser = argparse.ArgumentParser(description='Fetch some tweets and upload them in kafka using spark')
+parser.add_argument('--kafkaport', type=int, default=9092, help="Kafka port")
+parser.add_argument('--kafkahost', type=str, default="localhost", help="Kafka hostname")
 parser.add_argument('-t', '--topic', type=str, default="twitto", help="The name of the topic. Carefull, this should be the same in producer.py")
 args = parser.parse_args()
 
