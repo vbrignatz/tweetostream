@@ -36,13 +36,20 @@ db = client.twitto
 
 # Definition of Dash app
 app = dash.Dash()
-app.layout = html.Div(
-    [   html.H2('Live Twitter Sentiment'),
-        dcc.Graph(id='new-tweet-score', animate=True),
-        dcc.Interval(
-            id='graph-update',
-            interval=1*1000
-        ),
+app.layout = html.Div([
+    html.H2("Change the value in the text box to see callbacks in action!"),
+    html.Div([
+        "Input: ",
+        dcc.Input(id='my-input', value='initial value', type='text')
+    ]),
+    html.Br(),
+    html.Div(id='my-output'),
+    html.H2('Live Twitter Sentiment'),
+    dcc.Graph(id='new-tweet-score', animate=True),
+    dcc.Interval(
+        id='graph-update',
+        interval=1000 #millisec
+    ),
     ]
 )
 
@@ -143,7 +150,24 @@ def update_graph_scatter(input_data):
     except Exception as e:
         with open(args.log,'a') as f:
             f.write(str(e))
-            f.write('\n')
+            f.write('\n') 
+
+@app.callback(
+    Output(component_id='my-output', component_property='children'),
+    Input(component_id='my-input', component_property='value')
+)
+def update_output_div(input_value):
+    try:
+        
+        tweet = str(input_value)
+        # add score
+        c_score = s.score(tweet)
+        return 'The sentiment score of the tweet is {}'.format(c_score)
+        
+        # save in mongodb
+        #return print(f'result {result.inserted_id} with score {c_score}')
+    except:
+        return "Error, the input is not a tweet"
 
 if __name__ == '__main__':
     # TODO: find a better solution
