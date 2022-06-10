@@ -1,7 +1,10 @@
 secret.json
 *tmp.py
+*.tmp
 *.json
 __pycache__/
 parc/
 .idea/
 check/
+data/
+*.log

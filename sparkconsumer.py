@@ -1,4 +1,3 @@
-
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
 from pyspark.sql.types import StringType, StructType
@@ -8,14 +7,22 @@ from pyspark.sql import functions as F
 from scorer import Scorer, getscore
 from pymongo import MongoClient
 import argparse
+from time import sleep
 
 # Argument parsing
-parser = argparse.ArgumentParser(description='Fetch some tweets and upload them in kafka using spark')
+parser = argparse.ArgumentParser(description='Fetch some tweets from kafka')
 parser.add_argument('--kafkaport', type=int, default=9092, help="Kafka port")
 parser.add_argument('--kafkahost', type=str, default="localhost", help="Kafka hostname")
+parser.add_argument('--mongohost', type=str, default="localhost", help="Mongo hostname")
+parser.add_argument('--mongoport', type=int, default=27017, help="Mongo port")
 parser.add_argument('-t', '--topic', type=str, default="twitto", help="The name of the topic. Carefull, this should be the same in producer.py")
 args = parser.parse_args()
 
+# TODO: find a better solution
+SLEEP_TIME = 10
+print(f"Waiting {SLEEP_TIME}s for services to start...")
+sleep(SLEEP_TIME)
+print("Starting ...")
 
 spark = SparkSession.\
         builder.\
@@ -31,7 +38,7 @@ spark.sparkContext.setLogLevel("ERROR")
 df = spark \
     .readStream \
     .format("kafka") \
-    .option("kafka.bootstrap.servers",f"{args.sparkhost}:{args.sparkport}") \
+    .option("kafka.bootstrap.servers",f"{args.kafkahost}:{args.kafkaport}") \
     .option("subscribe", f"{args.topic}") \
     .load()
 

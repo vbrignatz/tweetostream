@@ -1,79 +1,31 @@
-# Kafka
+# Usage
 
-## Install Java
+## Docker
+You first need to install docker ([see here](https://docs.docker.com/get-docker/)).
 
+## Build
+
+To build the app, use
 ```
-wget https://download.oracle.com/java/18/latest/jdk-18_linux-x64_bin.tar.gz
-tar zxf jdk-18_linux-x64_bin.tar.gz 
-sudo mkdir /opt/jdk/
-sudo mv jdk-18.0.1.1/ /opt/jdk/
-echo JAVA_HOME=/opt/jdk/jdk-18.0.1.1/ >> ~/.bashrc
-echo PATH=\$PATH:\$JAVA_HOME/bin >> ~/.bashrc
-$JAVA_HOME/
-sudo update-alternatives --install /usr/bin/java java /opt/jdk/jdk-18.0.1.1/bin/java 100
-java -version
+docker-compose build
 ```
 
-## Download kafka
+This will build the producer and consumer containers.
 
-Download kafka, place it in `/usr/local/`, update the `.bashrc` and `PATH`
+## Run
+
+To start the app, use
 ```
-wget https://archive.apache.org/dist/kafka/2.7.0/kafka_2.13-2.7.0.tgz
-tar xzf kafka_2.13-2.7.0.tgz
-sudo mv kafka_2.13-2.7.0 /usr/local/kafka
-echo KAFKA_HOME=/usr/local/kafka  >> ~/.bashrc
-echo PATH=\$PATH:\$KAFKA_HOME/bin >> ~/.bashrc
-source ~/.bashrc
+docker-compose up
 ```
 
-## Download zookeeper
+This will launch the kafka, zookeeper and mongodb containers as well as the producer and consumer container.
 
-Download zookeeper, place it in `/usr/local/`, update the `.bashrc` and `PATH`
+You can connect to the mongo database on the port `27018`.
+A volume will be set in `./data/mongo` for persistent storage 
 
-```
-wget -q https://archive.apache.org/dist/zookeeper/zookeeper-3.4.14/zookeeper-3.4.14.tar.gz
-tar xzf zookeeper-3.4.14.tar.gz
-sudo mv zookeeper-3.4.14 /usr/local/zk
-echo ZK_HOME=/usr/local/zk >> ~/.bashrc
-echo PATH=\$PATH:\$ZK_HOME/bin >> ~/.bashrc
-source ~/.bashrc
-```
 
-## Launch zk & kafka
+## Program
 
-Take the default config and start it :
-
-```
-cd $ZK_HOME/conf
-cp zoo_sample.cfg zoo.cfg
-
-zkServer.sh start
-```
-
-Start kafka with default config as well :
-```
-cd $KAFKA_HOME
-kafka-server-start.sh $KAFKA_HOME/config/server.properties
-```
-
-Create the topic `twitto` :
-```
-kafka-topics.sh --create --topic twitto  --bootstrap-server localhost:9092
-kafka-topics.sh --list --bootstrap-server localhost:9092
-```
-
-To create a simple consumer and producer :
-```
-kafka-console-producer.sh --topic twitto --bootstrap-server localhost:9092
-kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic twitto --from-beginning
-```
-
-# MongoDB
-
-Use this link to install : https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-ubuntu/
-
-Start `mongodb` with 
-```
-sudo systemctl start mongod
-```
-
+The producer will get the latest tweets with the choosen keyword and put them in the kafka topic `twitto`.
+The consumer will get the tweets from kafka, add a score reflecting the sentiment in the text, and store them in MongoDB. 
