@@ -1,13 +1,30 @@
 import dash
 import plotly
 import plotly.graph_objs as go
+import argparse
 
 from time import sleep
 from dash.dependencies import Output,Input
 from dash import dcc
 from dash import html
+from pymongo import MongoClient
 
-import numpy as np
+# Argument parsing
+parser = argparse.ArgumentParser(description='Fetch some tweets and upload them in kafka')
+parser.add_argument('--kafkaport', type=int, default=9092, help="Kafka port")
+parser.add_argument('--kafkahost', type=str, default="localhost", help="Kafka hostname")
+parser.add_argument('--mongohost', type=str, default="localhost", help="Mongo hostname")
+parser.add_argument('--mongoport', type=int, default=27017, help="Mongo port")
+parser.add_argument('-t', '--topic', type=str, default="twitto", help="The name of the topic. Carefull, this should be the same in producer.py")
+parser.add_argument('-p', '--port', type=int, default=8085, help="Dash port")
+parser.add_argument('--log', type=str, default="errors.log", help="log file")
+
+parser.add_argument('N', type=int, default=100, help="The number of recent tweets to add in graph.")
+args = parser.parse_args()
+
+# Connection to mongoDB 
+client = MongoClient(host=[f'{args.mongohost}:{args.mongoport}'])
+db = client.twitto
 
 # Definition of Dash app
 app = dash.Dash()
@@ -32,14 +49,14 @@ def update_graph_histo(input_data):
     try:
 
         # setup axis
-        X = np.random.randn(500)
+        X = [el["score"] for el in list(db.test.find({}, {"score":1 , '_id' : 0}))]
 
         # plotting data
         data = plotly.graph_objs.Histogram(
                 x = X 
                 )
 
-        return { 'data': [data],'layout' : go.Layout()
+        return { 'data': [data] #,'layout' : go.Layout()
                 }
         
     # Erreurs renvoyees dans le fichier log
@@ -51,7 +68,7 @@ def update_graph_histo(input_data):
 if __name__ == '__main__':
 
     try:
-        app.run_server(debug=True, host="0.0.0.0", port= 6969)
+        app.run_server(debug=True, host="0.0.0.0", port= 8085)
     except KeyboardInterrupt:
         print("Stopping")
 
