@@ -4,14 +4,9 @@ import json
 import argparse
 
 from kafka import KafkaConsumer
+from kafka.errors import NoBrokersAvailable
 from pymongo import MongoClient
 from time import sleep
-
-# TODO: find a better solution
-SLEEP_TIME = 10
-print(f"Waiting {SLEEP_TIME}s for services to start...")
-sleep(SLEEP_TIME)
-print("Starting ...")
 
 # Argument parsing
 parser = argparse.ArgumentParser(description='Fetch some tweets and upload them in kafka')
@@ -27,11 +22,19 @@ mongoclient = MongoClient(host=[f'{args.mongohost}:{args.mongoport}'])
 db = mongoclient.twitto
 
 # Setup Kafka consumer
-consumer = KafkaConsumer(
-    args.topic,
-    bootstrap_servers=[f'{args.kafkahost}:{args.kafkaport}'],
-    value_deserializer=lambda x: json.loads(x.decode('utf-8'))
-    )
+SLEEP_TIME = 5
+broker_av = False
+while not broker_av :
+    try:
+        consumer = KafkaConsumer(
+            args.topic,
+            bootstrap_servers=[f'{args.kafkahost}:{args.kafkaport}'],
+            value_deserializer=lambda x: json.loads(x.decode('utf-8'))
+            )
+        broker_av = True 
+    except NoBrokersAvailable as e:
+        print(f"{e}. Retry in {SLEEP_TIME}s")
+        sleep(SLEEP_TIME)
 
 # Scorer definition
 s = Scorer()

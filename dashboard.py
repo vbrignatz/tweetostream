@@ -9,6 +9,7 @@ import datetime
 from time import sleep
 from scorer import Scorer
 from kafka import KafkaConsumer
+from kafka.errors import NoBrokersAvailable
 from dash.dependencies import Output,Input
 from dash import dcc
 from dash import html
@@ -170,11 +171,19 @@ def update_output_div(input_value):
         return "Error, the input is not a tweet"
 
 if __name__ == '__main__':
-    # TODO: find a better solution
-    SLEEP_TIME = 10
-    print(f"Waiting {SLEEP_TIME}s for services to start...")
-    sleep(SLEEP_TIME)
-    print("Starting ...")
+
+    SLEEP_TIME = 5
+    broker_av = False
+    while not broker_av :
+        try:
+            _ = KafkaConsumer(
+                args.topic,
+                bootstrap_servers=[f'{args.kafkahost}:{args.kafkaport}']
+                )
+            broker_av = True 
+        except NoBrokersAvailable as e:
+            print(f"{e}. Retry in {SLEEP_TIME}s")
+            sleep(SLEEP_TIME)
 
     try:
         thread = Consumer()
