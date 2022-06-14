@@ -55,7 +55,7 @@ app.layout = html.Div([
     dcc.Graph(id='histogram', animate=True),
     dcc.Interval(
         id='hist-update',
-        interval=20000 #millisec
+        interval=60000 #millisec
     ),
     html.Div(id='tweet1', style={'whiteSpace': 'pre-line'}),
     html.Div(id='tweet2', style={'whiteSpace': 'pre-line'}),
@@ -64,122 +64,6 @@ app.layout = html.Div([
         interval=5000 #millisec
     ),
 ])
-
-# Class Consumer to run in background thread
-class Consumer(threading.Thread):
-    consumer_stop = threading.Event()
-
-    def __init__(self) -> None:
-        super().__init__()
-        # the real time queue containing the lastest tweets
-        self.tweet_queue = []
-        self.max_queue_size = 100
-
-        # queue containing tweets from start_time to end_time
-        self.recent_tweets = []
-
-        self.end_time = datetime.datetime.now()
-        self.history_time = args.N # seconds
-        self.start_time = datetime.datetime.now() - datetime.timedelta(seconds=self.history_time)
-
-
-    def update(self):
-        # take the content of tweet_queue
-        self.recent_tweets, self.tweet_queue = self.recent_tweets + self.tweet_queue, []
-
-        # update current time
-        self.end_time = self.recent_tweets[-1]["datetime"]
-        self.start_time = self.end_time - datetime.timedelta(seconds=self.history_time)
-
-        # delete old data
-        for i in range(len(self.recent_tweets)):
-            if self.recent_tweets[i]["datetime"] > self.start_time:
-                break
-        self.recent_tweets = self.recent_tweets[i:]
-
-        # return recent tweets
-        return self.recent_tweets
-
-    def run(self):
-        # function ran by thread
-
-        # init consumer
-        consumer = KafkaConsumer(
-            args.topic,
-            bootstrap_servers=[f'{args.kafkahost}:{args.kafkaport}'],
-            value_deserializer=lambda x: json.loads(x.decode('utf-8'))
-            )
-
-        # main loop
-        for message in consumer:
-            
-            tweet = message.value
-            # adding datetime
-            tweet["datetime"] = datetime.datetime.strptime(tweet["created_at"], '%Y-%m-%dT%H:%M:%S.000Z') # 2022-05-31T13:30:48.000Z
-
-            # adding to queue
-            self.tweet_queue.append(tweet)
-            # freeing space if needed
-            if len(self.tweet_queue) > self.max_queue_size:
-                self.tweet_queue.pop(0)
-
-            if Consumer.consumer_stop.is_set():
-                break
-
-        consumer.close()
-
-@app.callback(Output('new-tweet-score', 'figure'),
-              [Input('graph-update', 'n_intervals')])
-def update_graph_scatter(input_data):
-    ''' Fonction de mise à jour du graph 
-    Il faut être connecté à MongoDB
-    Pour être en temps réel : il faut que le 
-    consummer.py soit en route ( et donc le producter.py aussi ) '''
-
-    try:
-        # get latest tweets
-        tweets = thread.update()
-
-        # setup axis
-        X = [t["datetime"] for t in tweets]
-        Y = [s.score(t["text"]) for t in tweets]
-
-        # plotting data
-        data = plotly.graph_objs.Scatter(
-                x = X ,
-                y = Y ,
-                name = 'Scatter',
-                mode = 'markers'
-                )
-
-        return { 'data': [data],'layout' : go.Layout(
-                    xaxis=dict(range=[thread.start_time, thread.end_time]),
-                    yaxis=dict(range=[-20, 20]),
-                    )
-                }
-
-    # Erreurs renvoyees dans le fichier log
-    except Exception as e:
-        with open(args.log,'a') as f:
-            f.write(str(e))
-            f.write('\n') 
-
-@app.callback(
-    Output(component_id='my-output', component_property='children'),
-    Input(component_id='my-input', component_property='value')
-)
-def update_output_div(input_value):
-    try:
-        
-        tweet = str(input_value)
-        # add score
-        c_score = s.score(tweet)
-        return 'The sentiment score of the tweet is {}'.format(c_score)
-        
-        # save in mongodb
-        #return print(f'result {result.inserted_id} with score {c_score}')
-    except:
-        return "Error, the input is not a tweet"
 
 # Class Consumer to run in background thread
 class Consumer(threading.Thread):
