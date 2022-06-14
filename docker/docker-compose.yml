@@ -1,0 +1,25 @@
+version: "3.3"
+
+services:
+  producer:
+    build:
+      context: ../.
+      dockerfile: ./docker/producer.Dockerfile
+    image: producer
+    container_name: producer
+  consumer:
+    build: 
+      context: ../.
+      dockerfile: ./docker/consumer.Dockerfile
+    image: consumer
+    container_name: consumer
+  dashboard:
+    build: 
+      context: ../.
+      dockerfile: ./docker/dashboard.Dockerfile
+    image: dashboard
+    container_name: dashboard
+    ports:
+      - '6969:8085'
+    environment:
+      - NGINX_WORKER_PROCESSES=auto

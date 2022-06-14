@@ -1,0 +1,11 @@
+producer:
+  name: producer
+  dockerimage: producer
+
+consumer:
+  name: consumer
+  dockerimage: consumer
+
+dashboard:
+  name: dashboard
+  dockerimage: dashboard

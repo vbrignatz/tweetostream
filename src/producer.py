@@ -50,6 +50,6 @@ class MyStream(tweepy.StreamingClient):
         self.disconnect()
 
 # Launching the streaming client
-streaming_client = MyStream(keys["vincent_api"]["bearer_token"])
+streaming_client = MyStream(keys["lea_api"]["bearer_token"])
 streaming_client.add_rules(tweepy.StreamRule(' '.join(args.query)))
 streaming_client.filter(tweet_fields=TWEET_FIELDS + args.fields)

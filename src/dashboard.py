@@ -32,8 +32,11 @@ args = parser.parse_args()
 s = Scorer()
 
 # Connection to mongoDB 
-client = MongoClient(host=[f'{args.mongohost}:{args.mongoport}'])
-db = client.twitto
+mongoclient = MongoClient(host=[f'{args.mongohost}:{args.mongoport}'],
+                          username="root",
+                          password="secretpassword"
+                         )
+db = mongoclient.twitto
 
 # Definition of Dash app
 app = dash.Dash()

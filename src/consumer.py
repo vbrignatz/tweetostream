@@ -18,7 +18,10 @@ parser.add_argument('-t', '--topic', type=str, default="twitto", help="The name 
 args = parser.parse_args()
 
 # Connect to MongoDB
-mongoclient = MongoClient(host=[f'{args.mongohost}:{args.mongoport}'])
+mongoclient = MongoClient(host=[f'{args.mongohost}:{args.mongoport}'],
+                          username="root",
+                          password="secretpassword"
+                         )
 db = mongoclient.twitto
 
 # Setup Kafka consumer
