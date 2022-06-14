@@ -48,6 +48,9 @@ class MyStream(tweepy.StreamingClient):
         self.disconnect()
 
 # Launching the streaming client
-streaming_client = MyStream(keys["vincent_api"]["bearer_token"])
-streaming_client.add_rules(tweepy.StreamRule(' '.join(args.query)))
+streaming_client = MyStream(keys["aure_api"]["bearer_token"])
+streaming_client.add_rules(tweepy.StreamRule('covid'))
+streaming_client.add_rules(tweepy.StreamRule('marvel'))
+streaming_client.add_rules(tweepy.StreamRule('dccomic'))
+#streaming_client.add_rules(tweepy.StreamRule(' '.join(args.query)))
 streaming_client.filter(tweet_fields=TWEET_FIELDS + args.fields)

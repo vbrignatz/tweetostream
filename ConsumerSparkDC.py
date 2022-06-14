@@ -1,6 +1,6 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
-from pyspark.sql.types import StringType, StructType
+from pyspark.sql.types import StringType, StructType, DateType
 from pyspark.sql.types import *
 from pyspark.sql.functions import col, split
 from pyspark.sql import functions as F
@@ -18,6 +18,17 @@ parser.add_argument('--mongoport', type=int, default=27017, help="Mongo port")
 parser.add_argument('-t', '--topic', type=str, default="twitto", help="The name of the topic. Carefull, this should be the same in producer.py")
 args = parser.parse_args()
 
+mongoclient = MongoClient(host=[f'{args.mongohost}:{args.mongoport}'])
+db = mongoclient.twitto
+
+def process(batch_df, batch_id):
+    for col in batch_df.collect():
+        #print(col)
+        result = db.test.insert_one({'text':col['text'],'score':col['score']})
+        print(f'Inserted {result.inserted_id} with score {result}')
+    pass
+
+
 # TODO: find a better solution
 SLEEP_TIME = 10
 print(f"Waiting {SLEEP_TIME}s for services to start...")
@@ -27,8 +38,8 @@ print("Starting ...")
 spark = SparkSession.\
         builder.\
         appName("Sparktostream").\
-        config('spark.jars.packages', 'org.mongodb.spark:mongo-spark-connector:10.0.0').\
-        config('spark.jars.packages', 'org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.0').\
+        config('spark.jars.packages', 'org.mongodb.spark:mongo-spark-connector_2.11:2.4.4'). \
+        config('spark.jars.packages', 'org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.0'). \
         getOrCreate()
 
 
@@ -49,7 +60,8 @@ tweet_df_string = df.selectExpr("CAST(value AS STRING)")
 
 twt = StructType() \
     .add("text",StringType()) \
-    .add("created_at",DateType())
+    .add("created_at",DateType()) \
+    .add("entities",StringType())
 
 
 values = df.select(from_json(df.value.cast("string"), twt).alias("tweet"))
@@ -57,8 +69,15 @@ values = df.select(from_json(df.value.cast("string"), twt).alias("tweet"))
 
 df1 = values.select("tweet.*")
 
+
 order3 = df1 \
-    .withColumn("score",score(col("text")))
+    .withColumn("score",score(col("text"))
+  
+    )
+#selectionner uniquement les tweets qui contiennene le mot marvel
+order3 = order3.filter(col("entities").contains("dccomic"))
+
+
 #obtenir une sortie d'ecran des stream
 twt1 = order3\
     .writeStream \
@@ -70,5 +89,8 @@ twt1 = order3\
 twt1.awaitTermination()
 
 
+
+#query = order3.writeStream.queryName("test_tweets").foreachBatch(process).start()
+#query.awaitTermination()
 
 print("----- streaming is running -------")
