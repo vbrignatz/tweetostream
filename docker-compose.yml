@@ -44,10 +44,32 @@ services:
       - twitto
     depends_on: 
       - kafka
-  sparkconsumer:
+  consumerSparkCovid:
     build: 
       context: ./
-      dockerfile: ./sparkconsumer/Dockerfile
+      dockerfile: ./sparkconsumercovid/Dockerfile
+    image: sparkconsumer
+    container_name: sparkconsumer
+    networks:
+      - twitto
+    depends_on:
+      - mongodb
+      - kafka
+  consumerSparkDC:
+    build: 
+      context: ./
+      dockerfile: ./sparkconsumerdc/Dockerfile
+    image: sparkconsumer
+    container_name: sparkconsumer
+    networks:
+      - twitto
+    depends_on:
+      - mongodb
+      - kafka
+  consumerSparkMarvel:
+    build: 
+      context: ./
+      dockerfile: ./sparkconsumermarvel/Dockerfile
     image: sparkconsumer
     container_name: sparkconsumer
     networks:

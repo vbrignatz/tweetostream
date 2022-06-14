@@ -1,0 +1,4 @@
+afinn==0.1
+pymongo==4.1.1
+kafka-python==2.0.2
+pyspark==3.2.1
