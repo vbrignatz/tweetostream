@@ -51,6 +51,12 @@ app.layout = html.Div([
         id='graph-update',
         interval=1000 #millisec
     ),
+    html.H2('My histogram'),
+    dcc.Graph(id='histogram', animate=True),
+    dcc.Interval(
+        id='hist-update',
+        interval=20000 #millisec
+    ),
     ]
 )
 
@@ -169,6 +175,33 @@ def update_output_div(input_value):
         #return print(f'result {result.inserted_id} with score {c_score}')
     except:
         return "Error, the input is not a tweet"
+
+@app.callback(Output('histogram', 'figure'),
+              [Input('hist-update', 'n_intervals')])   
+def update_graph_histo(input_data):
+    ''' Fonction de mise à jour de l'histogramme
+    Il faut être connecté à MongoDB
+    Pour être en temps réel : il faut que le 
+    consummer.py soit en route ( et donc le producter.py aussi ) '''
+
+    try:
+
+        # setup axis
+        X = [el["score"] for el in list(db.test.find({}, {"score":1 , '_id' : 0}))]
+
+        # plotting data
+        data = plotly.graph_objs.Histogram(
+                x = X 
+                )
+
+        return { 'data': [data] #,'layout' : go.Layout()
+                }
+        
+    # Erreurs renvoyees dans le fichier log
+    except Exception as e:
+        with open('error.txt','a') as f:
+            f.write(str(e))
+            f.write('\n') 
 
 if __name__ == '__main__':
 
