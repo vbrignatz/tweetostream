@@ -9,6 +9,7 @@ import datetime
 from time import sleep
 from scorer import Scorer
 from kafka import KafkaConsumer
+from kafka.errors import NoBrokersAvailable
 from dash.dependencies import Output,Input
 from dash import dcc
 from dash import html
@@ -36,15 +37,33 @@ db = client.twitto
 
 # Definition of Dash app
 app = dash.Dash()
-app.layout = html.Div(
-    [   html.H2('Live Twitter Sentiment'),
-        dcc.Graph(id='new-tweet-score', animate=True),
-        dcc.Interval(
-            id='graph-update',
-            interval=1*1000
-        ),
-    ]
-)
+app.layout = html.Div([
+    html.H2("Change the value in the text box to see callbacks in action!"),
+    html.Div([
+        "Input: ",
+        dcc.Input(id='my-input', value='initial value', type='text')
+    ]),
+    html.Br(),
+    html.Div(id='my-output'),
+    html.H2('Live Twitter Sentiment'),
+    dcc.Graph(id='new-tweet-score', animate=True),
+    dcc.Interval(
+        id='graph-update',
+        interval=1000 #millisec
+    ),
+    html.H2('My histogram'),
+    dcc.Graph(id='histogram', animate=True),
+    dcc.Interval(
+        id='hist-update',
+        interval=60000 #millisec
+    ),
+    html.Div(id='tweet1', style={'whiteSpace': 'pre-line'}),
+    html.Div(id='tweet2', style={'whiteSpace': 'pre-line'}),
+    dcc.Interval(
+        id='tweet-update',
+        interval=5000 #millisec
+    ),
+])
 
 # Class Consumer to run in background thread
 class Consumer(threading.Thread):
@@ -143,14 +162,86 @@ def update_graph_scatter(input_data):
     except Exception as e:
         with open(args.log,'a') as f:
             f.write(str(e))
-            f.write('\n')
+            f.write('\n') 
+
+@app.callback(
+    Output(component_id='my-output', component_property='children'),
+    Input(component_id='my-input', component_property='value')
+)
+def update_output_div(input_value):
+    try:
+        
+        tweet = str(input_value)
+        # add score
+        c_score = s.score(tweet)
+        return 'The sentiment score of the tweet is {}'.format(c_score)
+        
+        # save in mongodb
+        #return print(f'result {result.inserted_id} with score {c_score}')
+    except:
+        return "Error, the input is not a tweet"
+
+@app.callback(Output('histogram', 'figure'),
+              [Input('hist-update', 'n_intervals')])   
+def update_graph_histo(input_data):
+    ''' Fonction de mise à jour de l'histogramme
+    Il faut être connecté à MongoDB
+    Pour être en temps réel : il faut que le 
+    consummer.py soit en route ( et donc le producter.py aussi ) '''
+
+    try:
+
+        # setup axis
+        X = [el["score"] for el in list(db.test.find({}, {"score":1 , '_id' : 0}))]
+
+        # plotting data
+        data = plotly.graph_objs.Histogram(
+                x = X 
+                )
+
+        return { 'data': [data] #,'layout' : go.Layout()
+                }
+        
+    # Erreurs renvoyees dans le fichier log
+    except Exception as e:
+        with open('error.txt','a') as f:
+            f.write(str(e))
+            f.write('\n') 
+
+@app.callback(
+    Output('tweet1', 'children'),
+    [Input('tweet-update', 'n_intervals')]
+)
+def update_output1(value):
+    text = "no tweet yet"
+    if len(thread.recent_tweets) > 1:
+        text = thread.recent_tweets[-1]["text"]
+    return text
+
+@app.callback(
+    Output('tweet2', 'children'),
+    [Input('tweet-update', 'n_intervals')]
+)
+def update_output2(value):
+    text = "no tweet yet"
+    if len(thread.recent_tweets) > 2:
+        text = thread.recent_tweets[-2]["text"]
+    return text
 
 if __name__ == '__main__':
-    # TODO: find a better solution
-    SLEEP_TIME = 10
-    print(f"Waiting {SLEEP_TIME}s for services to start...")
-    sleep(SLEEP_TIME)
-    print("Starting ...")
+
+    SLEEP_TIME = 5
+    broker_av = False
+    while not broker_av :
+        try:
+            _ = KafkaConsumer(
+                args.topic,
+                bootstrap_servers=[f'{args.kafkahost}:{args.kafkaport}']
+                )
+            broker_av = True 
+        except NoBrokersAvailable as e:
+            print(f"{e}. Retry in {SLEEP_TIME}s")
+            sleep(SLEEP_TIME)
 
     try:
         thread = Consumer()

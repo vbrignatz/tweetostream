@@ -5,7 +5,7 @@ from pyspark.sql.types import StringType, StructType, FloatType, DateType, Integ
 from pyspark.sql.types import *
 from pyspark.sql.functions import col, split
 from pyspark.sql import functions as F
-from scorer import Scorer, getscore
+from scorer import Scorer #, getscore
 from pymongo import MongoClient
 import argparse
 from time import sleep
@@ -29,17 +29,9 @@ mongoclient = MongoClient(host=[f'{args.mongohost}:{args.mongoport}'])
 db = mongoclient.twitto
 
 
-def process(batch_df,batch_id):
-    
-    for col in batch_df.collect():
-        
-        
-        result = db.test.insert_one({'text':col['text'],'score':col['score']})
-        print(f'Inserted {result.inserted_id} with score {result}')
-    pass
 
 # TODO: find a better solution
-SLEEP_TIME = 30
+SLEEP_TIME = 5
 print(f"Waiting {SLEEP_TIME}s for services to start...")
 sleep(SLEEP_TIME)
 print("Starting ...")
@@ -69,33 +61,34 @@ df = spark \
     .load()
 
  
-#sc = Scorer()
+sc = Scorer()
 #Instanciation de la methode getscore et on le parse en float
-score = F.udf(getscore, FloatType())
+score = F.udf(sc.score, FloatType())
 
 #Recuppération de des valeurs en string  
-tweet_df_string = df.selectExpr("CAST(value AS STRING)")
+# tweet_df_string = df.selectExpr("CAST(value AS STRING)")
 
 # dans notre 
 twt = StructType() \
     .add("text",StringType()) \
     .add("created_at",DateType()) \
+    .add("lang", StringType())
 
+def db_insert(batch_df, batch_id):
+    for col in batch_df.collect():
+        # print(col.as_Dict())
+        result = db.test.insert_one({'text':col['text'],'score':col['score']})
+        print(f'Inserted {result.inserted_id} with score {result}')
 
 values = df.select(from_json(df.value.cast("string"), twt).alias("tweet"))
 
 
 df1 = values.select("tweet.*")
 
-order3 = df1 \
-    .withColumn("score",score(col("text")))
+order = df1.withColumn("score", score(col("text")))
 
-
-
-#dsw = (order3.writeStream.format("mongodb").queryName("ToMDB").option('spark.mongodb.connection.uri', 'mongodb+srv://moons:mongomoons@cluster0.eky2uou.mongodb.net/?retryWrites=true&w=majority').option('spark.mongodb.database', 'twitto').option('spark.mongodb.collection', 'test').trigger(continuous="10 seconds").outputMode("append").start().awaitTermination());
-
-query = order3.writeStream.queryName("test_tweets") \
-        .foreachBatch(process).start()
+query = order.writeStream.queryName("test_tweets") \
+        .foreachBatch(db_insert).start()
 query.awaitTermination()
 
 

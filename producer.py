@@ -28,19 +28,21 @@ args = parser.parse_args()
 with open(args.secret, "r") as secrets:
     keys = json.load(secrets)
 
-# TODO: find a better solution
-SLEEP_TIME = 60
-print(f"Waiting {SLEEP_TIME}s for services to start...")
-sleep(SLEEP_TIME)
-print("Starting ...")
-
-# Init the producer
-producer = KafkaProducer(bootstrap_servers=[f'{args.host}:{args.port}'])
+# Producer init
+SLEEP_TIME = 5
+broker_av = False
+while not broker_av :
+    try:
+        producer = KafkaProducer(bootstrap_servers=[f'{args.host}:{args.port}'])
+        broker_av = True 
+    except NoBrokersAvailable as e:
+        print(f"{e}. Retry in {SLEEP_TIME}s")
+        sleep(SLEEP_TIME)
 
 # Create child class or tweepy Streaming Client
 class MyStream(tweepy.StreamingClient):
     def on_tweet(self, data):
-        res = producer.send(args.topic, value=json.dumps(data.data).encode('utf-8'))
+        res = producer.send(args.topic, value=json.dumps(data.data).encode('utf-8')) # TODO: ERROR HANDELING
         print(f"Sent {data.id} [{res}]")
         return True
     
@@ -48,6 +50,6 @@ class MyStream(tweepy.StreamingClient):
         self.disconnect()
 
 # Launching the streaming client
-streaming_client = MyStream(keys["emi_api"]["bearer_token"])
+streaming_client = MyStream(keys["justine_api"]["bearer_token"])
 streaming_client.add_rules(tweepy.StreamRule(' '.join(args.query)))
 streaming_client.filter(tweet_fields=TWEET_FIELDS + args.fields)
