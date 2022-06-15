@@ -17,11 +17,13 @@ db = mongoclient.twitto
 
 
 # Argument parsing
-parser = argparse.ArgumentParser(description='Fetch some tweets and upload them in spark')
-parser.add_argument('--sparkport', type=int, default=9092, help="Kafka port")
-parser.add_argument('--sparkhost', type=str, default="localhost", help="Kafka hostname")
+# Argument parsing
+parser = argparse.ArgumentParser(description='Fetch some tweets from kafka')
+parser.add_argument('--kafkaport', type=int, default=9092, help="Kafka port")
+parser.add_argument('--kafkahost', type=str, default="localhost", help="Kafka hostname")
+parser.add_argument('--mongohost', type=str, default="localhost", help="Mongo hostname")
+parser.add_argument('--mongoport', type=int, default=27017, help="Mongo port")
 parser.add_argument('-t', '--topic', type=str, default="twitto", help="The name of the topic. Carefull, this should be the same in producer.py")
-parser.add_argument('--fields', type=str, default="", help="thematic")
 args = parser.parse_args()
 
 def process(batch_df,batch_id):
@@ -52,7 +54,7 @@ spark.sparkContext.setLogLevel("ERROR")
 df = spark \
     .readStream \
     .format("kafka") \
-    .option("kafka.bootstrap.servers",f"{args.sparkhost}:{args.sparkport}") \
+    .option("kafka.bootstrap.servers",f"{args.kafkakhost}:{args.kafkaport}") \
     .option("subscribe", f"{args.topic}") \
     .load()
 
