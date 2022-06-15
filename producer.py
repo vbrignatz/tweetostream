@@ -5,14 +5,7 @@ import argparse
 from kafka import KafkaProducer
 from kafka.errors import NoBrokersAvailable
 from time import sleep
-
-TWEET_FIELDS=[
-    "created_at",
-    "text",
-    "lang",
-    "entities",
-    # "retweet_count",
-]
+from const import TWEET_FIELDS
 
 # Argument parsing
 parser = argparse.ArgumentParser(description='Fetch some tweets and upload them in kafka')
@@ -21,7 +14,6 @@ parser.add_argument('--host', type=str, default="localhost", help="Kafka hostnam
 parser.add_argument('--secret', type=str, default="secret.json", help="The secret file containing the bearer token")
 parser.add_argument('-t', '--topic', type=str, default="twitto", help="The name of the topic. Carefull, this should be the same in consumer.py")
 parser.add_argument('query', nargs='+', type=str, help="The query to filter the tweets with.")
-parser.add_argument('--fields', nargs='+', default=[], type=str)
 args = parser.parse_args()
 
 # loading api keys
@@ -52,4 +44,4 @@ class MyStream(tweepy.StreamingClient):
 # Launching the streaming client
 streaming_client = MyStream(keys["justine_api"]["bearer_token"])
 streaming_client.add_rules(tweepy.StreamRule(' '.join(args.query)))
-streaming_client.filter(tweet_fields=TWEET_FIELDS + args.fields)
+streaming_client.filter(tweet_fields=list(TWEET_FIELDS.keys()))

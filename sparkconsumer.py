@@ -1,3 +1,8 @@
+import argparse
+import json
+
+from const import TWEET_FIELDS
+from scorer import Scorer
 
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
@@ -5,12 +10,8 @@ from pyspark.sql.types import StringType, StructType, FloatType, DateType, Integ
 from pyspark.sql.types import *
 from pyspark.sql.functions import col, split
 from pyspark.sql import functions as F
-from scorer import Scorer #, getscore
 from pymongo import MongoClient
-import argparse
 from time import sleep
-import json
-
 
 
 # Argument parsing
@@ -28,15 +29,11 @@ args = parser.parse_args()
 mongoclient = MongoClient(host=[f'{args.mongohost}:{args.mongoport}'])
 db = mongoclient.twitto
 
-
-
 # TODO: find a better solution
 SLEEP_TIME = 5
 print(f"Waiting {SLEEP_TIME}s for services to start...")
 sleep(SLEEP_TIME)
 print("Starting ...")
-
-
 
 # mise en place de la session en chargeant les drivers 
 spark = SparkSession \
@@ -65,23 +62,22 @@ sc = Scorer()
 #Instanciation de la methode getscore et on le parse en float
 score = F.udf(sc.score, FloatType())
 
-#Recuppération de des valeurs en string  
-# tweet_df_string = df.selectExpr("CAST(value AS STRING)")
-
-# dans notre 
-twt = StructType() \
-    .add("text",StringType()) \
-    .add("created_at",DateType()) \
-    .add("lang", StringType())
+# Recuperation des fields depuis la constante tweet_fields
+linker = {"str":StringType()}
+twt = StructType()
+for k, v in TWEET_FIELDS.items():
+    twt.add(k, linker[v])
 
 def db_insert(batch_df, batch_id):
+    """
+    insere les colones de batch_df dans la db mongo
+    """
     for col in batch_df.collect():
-        # print(col.as_Dict())
-        result = db.test.insert_one({'text':col['text'],'score':col['score']})
+        print(col.asDict())
+        result = db.test.insert_one(col.asDict())
         print(f'Inserted {result.inserted_id} with score {result}')
 
 values = df.select(from_json(df.value.cast("string"), twt).alias("tweet"))
-
 
 df1 = values.select("tweet.*")
 
@@ -93,4 +89,3 @@ query.awaitTermination()
 
 
 print("----- streaming is running -------")
-
