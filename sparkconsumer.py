@@ -70,7 +70,6 @@ tweet_df_string = df.selectExpr("CAST(value AS STRING)")
 twt = StructType() \
     .add("text",StringType()) \
     .add("created_at",DateType()) \
-    .add("entities",StringType())
 
 
 values = df.select(from_json(df.value.cast("string"), twt).alias("tweet"))
