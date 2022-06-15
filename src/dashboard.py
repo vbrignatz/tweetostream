@@ -48,18 +48,18 @@ app.layout = html.Div(
                 width=12)
             ]
         ),
-        # dbc.Row(
-        #     [
-        #         dbc.Col(
-        #             html.Div([
-        #                 "Input: ",
-        #                 dcc.Input(id='interactive-input', value='initial value', type='text')
-        #             ]),
-        #             html.Br(),
-        #             html.Div(id='interactive-output'),
-        #         )
-        #     ]
-        # ),
+        dbc.Row(
+            [
+                dbc.Col(
+                    [html.Div([
+                        "Input: ",
+                        dcc.Input(id='interactive-input', value='initial value', type='text')
+                    ]),
+                    html.Br(),
+                    html.Div(id='interactive-output'),]
+                )
+            ]
+        ),
         dbc.Row(
             [
             dbc.Col(
