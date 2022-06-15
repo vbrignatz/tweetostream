@@ -7,7 +7,7 @@ You first need to install docker ([see here](https://docs.docker.com/get-docker/
 
 To build the app, use
 ```
-docker compose -f docker/docker-compose/yml up --build
+docker compose -f docker/docker-compose.yml up --build
 ```
 
 This will build the containers and launch them.

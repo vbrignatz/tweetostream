@@ -1,3 +1,4 @@
+from turtle import width
 import dash
 import plotly
 import plotly.graph_objs as go
@@ -14,6 +15,7 @@ from dash.dependencies import Output,Input
 from dash import dcc
 from dash import html
 from pymongo import MongoClient
+import dash_bootstrap_components as dbc
 
 # Argument parsing
 parser = argparse.ArgumentParser(description='Fetch some tweets and upload them in kafka')
@@ -24,7 +26,7 @@ parser.add_argument('--mongoport', type=int, default=27017, help="Mongo port")
 parser.add_argument('-t', '--topic', type=str, default="twitto", help="The name of the topic. Carefull, this should be the same in producer.py")
 parser.add_argument('-p', '--port', type=int, default=8085, help="Dash port")
 parser.add_argument('--log', type=str, default="errors.log", help="log file")
-
+parser.add_argument('--live-tweet', type=int, default=3, help="Number of live tweet to show on dashboard")
 parser.add_argument('N', type=int, default=100, help="The number of recent tweets to add in graph.")
 args = parser.parse_args()
 
@@ -36,34 +38,72 @@ client = MongoClient(host=[f'{args.mongohost}:{args.mongoport}'])
 db = client.twitto
 
 # Definition of Dash app
-app = dash.Dash()
-app.layout = html.Div([
-    html.H2("Change the value in the text box to see callbacks in action!"),
-    html.Div([
-        "Input: ",
-        dcc.Input(id='my-input', value='initial value', type='text')
-    ]),
-    html.Br(),
-    html.Div(id='my-output'),
-    html.H2('Live Twitter Sentiment'),
-    dcc.Graph(id='new-tweet-score', animate=True),
-    dcc.Interval(
-        id='graph-update',
-        interval=1000 #millisec
-    ),
-    html.H2('My histogram'),
-    dcc.Graph(id='histogram', animate=True),
-    dcc.Interval(
-        id='hist-update',
-        interval=60000 #millisec
-    ),
-    html.Div(id='tweet1', style={'whiteSpace': 'pre-line'}),
-    html.Div(id='tweet2', style={'whiteSpace': 'pre-line'}),
-    dcc.Interval(
-        id='tweet-update',
-        interval=5000 #millisec
-    ),
-])
+app = dash.Dash(external_stylesheets=[dbc.themes.SKETCHY])
+app.layout = html.Div(
+    [
+        dbc.Row(
+            [
+            dbc.Col(
+                html.Div("Tweets Sentiments about Covid"),
+                width=12)
+            ]
+        ),
+        # dbc.Row(
+        #     [
+        #         dbc.Col(
+        #             html.Div([
+        #                 "Input: ",
+        #                 dcc.Input(id='interactive-input', value='initial value', type='text')
+        #             ]),
+        #             html.Br(),
+        #             html.Div(id='interactive-output'),
+        #         )
+        #     ]
+        # ),
+        dbc.Row(
+            [
+            dbc.Col(
+                children = [
+                    # html.Div(id='my-output-graph'),
+                    html.H2('Live Twitter Sentiment'),
+                    dcc.Graph(id='scatter', animate=True),
+                    dcc.Interval(
+                            id='graph-update',
+                            interval=1000 #millisec
+                        ),
+                    ], 
+                width=12,
+                style={"border":"2px black solid"}
+                )
+            ]
+        ),
+        dbc.Row(
+            [
+                dbc.Col(
+                    children = [
+                        # html.Div(id='my-output-histo'),
+                        html.H2('My histogram'),
+                        dcc.Graph(id='histogram', animate=True),
+                        dcc.Interval(
+                            id='hist-update',
+                            interval=20000 #millisec
+                        ),
+                    ],
+                    width=6,
+                    style={"border":"2px black solid"}
+                    ),
+                dbc.Col(
+                    children = 
+                        [ html.H2('Feeds') ] + \
+                        [ html.Div(id=f'tweet{i}', style={'whiteSpace': 'pre-line'}) for i in range(args.live_tweet) ] + \
+                        [ dcc.Interval(id='tweet-update', interval=5000) ],
+                    width=6,
+                    style={"border":"2px black solid"}
+                    )
+            ]
+        )
+    ]
+)
 
 # Class Consumer to run in background thread
 class Consumer(threading.Thread):
@@ -128,7 +168,7 @@ class Consumer(threading.Thread):
 
         consumer.close()
 
-@app.callback(Output('new-tweet-score', 'figure'),
+@app.callback(Output('scatter', 'figure'),
               [Input('graph-update', 'n_intervals')])
 def update_graph_scatter(input_data):
     ''' Fonction de mise à jour du graph 
@@ -165,8 +205,8 @@ def update_graph_scatter(input_data):
             f.write('\n') 
 
 @app.callback(
-    Output(component_id='my-output', component_property='children'),
-    Input(component_id='my-input', component_property='value')
+    Output(component_id='interactive-output', component_property='children'),
+    Input(component_id='interactive-input', component_property='value')
 )
 def update_output_div(input_value):
     try:
@@ -209,23 +249,14 @@ def update_graph_histo(input_data):
             f.write('\n') 
 
 @app.callback(
-    Output('tweet1', 'children'),
+    [Output(f'tweet{i}', 'children') for i in range(args.live_tweet)],
     [Input('tweet-update', 'n_intervals')]
 )
-def update_output1(value):
-    text = "no tweet yet"
-    if len(thread.recent_tweets) > 1:
-        text = thread.recent_tweets[-1]["text"]
-    return text
-
-@app.callback(
-    Output('tweet2', 'children'),
-    [Input('tweet-update', 'n_intervals')]
-)
-def update_output2(value):
-    text = "no tweet yet"
-    if len(thread.recent_tweets) > 2:
-        text = thread.recent_tweets[-2]["text"]
+def update_output0(value):
+    text = ["no tweet yet"]*args.live_tweet
+    for i in range(1, args.live_tweet+1):
+        if len(thread.recent_tweets) > i:
+            text[-i] = thread.recent_tweets[-i]["text"]
     return text
 
 if __name__ == '__main__':
