@@ -29,7 +29,7 @@ with open(args.secret, "r") as secrets:
     keys = json.load(secrets)
 
 # TODO: find a better solution
-SLEEP_TIME = 30
+SLEEP_TIME = 60
 print(f"Waiting {SLEEP_TIME}s for services to start...")
 sleep(SLEEP_TIME)
 print("Starting ...")
@@ -48,6 +48,6 @@ class MyStream(tweepy.StreamingClient):
         self.disconnect()
 
 # Launching the streaming client
-streaming_client = MyStream(keys["vincent_api"]["bearer_token"])
+streaming_client = MyStream(keys["emi_api"]["bearer_token"])
 streaming_client.add_rules(tweepy.StreamRule(' '.join(args.query)))
 streaming_client.filter(tweet_fields=TWEET_FIELDS + args.fields)

@@ -1,18 +1,15 @@
 
-from operator import contains
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
-from pyspark.sql.types import StringType, StructType, DateType, StructField, IntegerType, FloatType
+from pyspark.sql.types import StringType, StructType, FloatType, DateType, IntegerType
 from pyspark.sql.types import *
 from pyspark.sql.functions import col, split
 from pyspark.sql import functions as F
 from scorer import Scorer, getscore
 from pymongo import MongoClient
 import argparse
+from time import sleep
 import json
-
-mongoclient = MongoClient(port=27017)
-db = mongoclient.twitto
 
 
 
@@ -26,6 +23,12 @@ parser.add_argument('--mongoport', type=int, default=27017, help="Mongo port")
 parser.add_argument('-t', '--topic', type=str, default="twitto", help="The name of the topic. Carefull, this should be the same in producer.py")
 args = parser.parse_args()
 
+
+# Connect to MongoDB
+mongoclient = MongoClient(host=[f'{args.mongohost}:{args.mongoport}'])
+db = mongoclient.twitto
+
+
 def process(batch_df,batch_id):
     
     for col in batch_df.collect():
@@ -34,6 +37,13 @@ def process(batch_df,batch_id):
         result = db.test.insert_one({'text':col['text'],'score':col['score']})
         print(f'Inserted {result.inserted_id} with score {result}')
     pass
+
+# TODO: find a better solution
+SLEEP_TIME = 30
+print(f"Waiting {SLEEP_TIME}s for services to start...")
+sleep(SLEEP_TIME)
+print("Starting ...")
+
 
 
 # mise en place de la session en chargeant les drivers 
