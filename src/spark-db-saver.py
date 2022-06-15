@@ -73,7 +73,7 @@ def db_insert(batch_df, batch_id):
     insere les colones de batch_df dans la db mongo
     """
     for col in batch_df.collect():
-        print(col.asDict())
+        # print(col.asDict())
         result = db.test.insert_one(col.asDict())
         print(f'Inserted {result.inserted_id} with score {result}')
 

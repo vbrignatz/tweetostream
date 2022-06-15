@@ -9,7 +9,7 @@ services:
     networks:
       - twitto
     volumes:
-      - ./data/mongo:/data/db
+      - ../data/mongo:/data/db
   zookeeper:
     image: 'bitnami/zookeeper:latest'
     container_name: zk_server
@@ -36,20 +36,20 @@ services:
       - twitto
   producer:
     build:
-      context: ./
-      dockerfile: ./producer/Dockerfile
+      context: ../.
+      dockerfile: ./docker/producer.Dockerfile
     image: producer
     container_name: producer
     networks:
       - twitto
     depends_on: 
       - kafka
-  sparkconsumer:
+  spark-db-saver:
     build: 
-      context: ./
-      dockerfile: ./sparkconsumer/Dockerfile
-    image: sparkconsumer
-    container_name: sparkconsumer
+      context: ../.
+      dockerfile: ./docker/spark-db-saver.Dockerfile
+    image: spark-db-saver
+    container_name: spark-db-saver
     networks:
       - twitto
     depends_on:
@@ -57,8 +57,8 @@ services:
       - kafka
   dashboard:
     build: 
-      context: ./
-      dockerfile: ./dashboard/Dockerfile
+      context: ../.
+      dockerfile: ./docker/dashboard.Dockerfile
     image: dashboard
     container_name: dashboard
     ports:

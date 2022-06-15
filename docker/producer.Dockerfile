@@ -1,8 +1,8 @@
 FROM python:3.9
 WORKDIR /code
-COPY producer/requirements.txt .
+COPY requirements/producer.requirements.txt requirements.txt
 RUN pip install --no-cache-dir --upgrade -r ./requirements.txt
-COPY producer.py .
+COPY src/producer.py .
+COPY src/const.py .
 COPY secret.json .
-COPY const.py .
 CMD ["python3", "-u", "producer.py", "covid", "lang:en", "--host", "kafka_server", "--port", "9092", "--topic", "covid"]

@@ -3,27 +3,19 @@
 ## Docker
 You first need to install docker ([see here](https://docs.docker.com/get-docker/)).
 
-## Build
+## Build and run
 
 To build the app, use
 ```
-docker-compose build
+docker compose -f docker/docker-compose/yml up --build
 ```
 
-This will build the producer and consumer containers.
+This will build the containers and launch them.
 
-## Run
-
-To start the app, use
-```
-docker-compose up
-```
-
-This will launch the kafka, zookeeper and mongodb containers as well as the producer and consumer container.
+This will launch the kafka, zookeeper and mongodb containers as well as the producer, spark-db-saver and dashboard container.
 
 You can connect to the mongo database on the port `27018`.
 A volume will be set in `./data/mongo` for persistent storage 
-
 
 ## Program
 
