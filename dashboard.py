@@ -14,6 +14,7 @@ from dash.dependencies import Output,Input
 from dash import dcc
 from dash import html
 from pymongo import MongoClient
+import dash_bootstrap_components as dbc
 
 # Argument parsing
 parser = argparse.ArgumentParser(description='Fetch some tweets and upload them in kafka')
@@ -36,34 +37,56 @@ client = MongoClient(host=[f'{args.mongohost}:{args.mongoport}'])
 db = client.twitto
 
 # Definition of Dash app
-app = dash.Dash()
-app.layout = html.Div([
-    html.H2("Change the value in the text box to see callbacks in action!"),
-    html.Div([
-        "Input: ",
-        dcc.Input(id='my-input', value='initial value', type='text')
-    ]),
-    html.Br(),
-    html.Div(id='my-output'),
-    html.H2('Live Twitter Sentiment'),
-    dcc.Graph(id='new-tweet-score', animate=True),
-    dcc.Interval(
-        id='graph-update',
-        interval=1000 #millisec
-    ),
-    html.H2('My histogram'),
-    dcc.Graph(id='histogram', animate=True),
-    dcc.Interval(
-        id='hist-update',
-        interval=20000 #millisec
-    ),
-    html.Div(id='tweet1', style={'whiteSpace': 'pre-line'}),
-    html.Div(id='tweet2', style={'whiteSpace': 'pre-line'}),
-    dcc.Interval(
-        id='tweet-update',
-        interval=5000 #millisec
-    ),
-])
+app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
+app.layout = html.Div(
+    [
+        dbc.Row(dbc.Col(html.Div("Tweets dentiments about covid"), width=6)),
+        dbc.Row(
+            dbc.Col(
+                children = [
+                    html.Div(id='my-output-graph'),
+                    html.H2('Live Twitter Sentiment'),
+                    dcc.Graph(id='new-tweet-score', animate=True),
+                    dcc.Interval(
+                            id='graph-update',
+                            interval=1000 #millisec
+                        ),
+                ], 
+                width="auto",
+                style={"border":"2px black solid"}
+            )
+        ),
+        dbc.Row(
+            [
+                dbc.Col(
+                        children = [
+                        html.Div(id='my-output-histo'),
+                        html.H2('My histogram'),
+                        dcc.Graph(id='histogram', animate=True),
+                        dcc.Interval(
+                            id='hist-update',
+                            interval=20000 #millisec
+                        ),
+                        ],
+                        width="auto",
+                        style={"border":"2px black solid"}
+                    ),
+                dbc.Col(
+                    children = [
+                    html.Div(id='tweet1', style={'whiteSpace': 'pre-line'}),
+                        html.Div(id='tweet2', style={'whiteSpace': 'pre-line'}),
+                        dcc.Interval(
+                            id='tweet-update',
+                            interval=5000 #millisec
+                        ),
+                        ],
+                        width="auto",
+                        style={"border":"2px black solid"}
+                    )
+            ]
+        )
+    ]
+)
 
 # Class Consumer to run in background thread
 class Consumer(threading.Thread):
@@ -165,7 +188,7 @@ def update_graph_scatter(input_data):
             f.write('\n') 
 
 @app.callback(
-    Output(component_id='my-output', component_property='children'),
+    Output(component_id='my-output-graph', component_property='children'),
     Input(component_id='my-input', component_property='value')
 )
 def update_output_div(input_value):
@@ -281,7 +304,7 @@ def update_graph_scatter(input_data):
             f.write('\n') 
 
 @app.callback(
-    Output(component_id='my-output', component_property='children'),
+    Output(component_id='my-output-histo', component_property='children'),
     Input(component_id='my-input', component_property='value')
 )
 def update_output_div(input_value):
