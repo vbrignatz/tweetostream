@@ -48,8 +48,8 @@ services:
     build: 
       context: ./
       dockerfile: ./sparkconsumercovid/Dockerfile
-    image: sparkconsumer
-    container_name: sparkconsumer
+    image: sparkconsumer1
+    container_name: sparkconsumer1
     networks:
       - twitto
     depends_on:
@@ -59,8 +59,8 @@ services:
     build: 
       context: ./
       dockerfile: ./sparkconsumerdc/Dockerfile
-    image: sparkconsumer
-    container_name: sparkconsumer
+    image: sparkconsumer2
+    container_name: sparkconsumer2
     networks:
       - twitto
     depends_on:
@@ -70,8 +70,8 @@ services:
     build: 
       context: ./
       dockerfile: ./sparkconsumermarvel/Dockerfile
-    image: sparkconsumer
-    container_name: sparkconsumer
+    image: sparkconsumer3
+    container_name: sparkconsumer3
     networks:
       - twitto
     depends_on:

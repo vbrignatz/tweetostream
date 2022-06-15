@@ -77,6 +77,9 @@ order3 = df1 \
 #selectionner uniquement les tweets qui contiennene le mot marvel
 order3 = order3.filter(col("entities").contains("marvel"))
 
+order3.show()
+
+
 
 #obtenir une sortie d'ecran des stream
 twt1 = order3\
@@ -94,3 +97,6 @@ twt1.awaitTermination()
 #query.awaitTermination()
 
 print("----- streaming is running -------")
+
+#faire un sparksubmit sur le fichier sparkconsumer.py
+spark-submit --packages org.mongodb.spark:mongo-spark-connector_2.11:2.4.4 --master local[2] ConsumerSparkMarvel.py
