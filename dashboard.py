@@ -61,7 +61,7 @@ app.layout = html.Div(
                         ),
                     ], 
                 width=12,
-                #style={"border":"2px black solid"}
+                style={"border":"2px black solid"}
                 )
             ]
         ),
@@ -78,10 +78,11 @@ app.layout = html.Div(
                         ),
                     ],
                     width=6,
-                    #style={"border":"2px black solid"}
+                    style={"border":"2px black solid"}
                     ),
                 dbc.Col(
                     children = [
+                        html.H2('Feeds'),
                         html.Div(id='tweet1', style={'whiteSpace': 'pre-line'}),
                         html.Div(id='tweet2', style={'whiteSpace': 'pre-line'}),
                         dcc.Interval(
@@ -90,7 +91,7 @@ app.layout = html.Div(
                         ),
                         ],
                     width=6,
-                    #style={"border":"2px black solid"}
+                    style={"border":"2px black solid"}
                     )
             ]
         )
