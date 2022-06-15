@@ -54,11 +54,11 @@ spark.sparkContext.setLogLevel("ERROR")
 df = spark \
     .readStream \
     .format("kafka") \
-    .option("kafka.bootstrap.servers",f"{args.kafkakhost}:{args.kafkaport}") \
+    .option("kafka.bootstrap.servers",f"{args.kafkahost}:{args.kafkaport}") \
     .option("subscribe", f"{args.topic}") \
     .load()
 
-
+ 
 #sc = Scorer()
 #Instanciation de la methode getscore et on le parse en float
 score = F.udf(getscore, FloatType())
