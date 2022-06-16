@@ -14,7 +14,7 @@ helm repo add bitnami https://charts.bitnami.com/bitnami
 
 Lancement :
 ```
-helm install my-release --set auth.rootPassword=secretpassword,auth.username=my-user,auth.password=secretpassword,auth.database=my-database bitnami/mongodb
+helm install mongo --set auth.rootPassword=secretpassword,auth.username=my-user,auth.password=secretpassword,auth.database=my-database bitnami/mongodb
 ```
 ```
 ** Please be patient while the chart is being deployed **
@@ -41,7 +41,7 @@ Then, run the following command:
 To connect to your database from outside the cluster execute the following commands:
 
     kubectl port-forward --namespace default svc/mongo-mongodb 27017:27017 &
-    mongosh --host 127.0.0.1 --authenticationDatabase admin -p $MONGODB_ROOT_PASSWORD
+    mongosh --host 127.0.0.1 --authenticationDatabase admin -p secretpassword
 ```
 
 La chart `bitnami/mongo` crée :
