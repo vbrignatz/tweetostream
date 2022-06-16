@@ -13,38 +13,22 @@ helm repo add bitnami https://charts.bitnami.com/bitnami
 ```
 
 Lancement :
+<!-- ```
+helm install mongo --set auth.rootPassword=secretpassword,auth.username=my-user,auth.password=secretpassword,auth.database=my-database mongodb-chart
+``` -->
 ```
-helm install mongo --set auth.rootPassword=secretpassword,auth.username=my-user,auth.password=secretpassword,auth.database=my-database bitnami/mongodb
+helm install mongo mongodb-chart
 ```
-```
-** Please be patient while the chart is being deployed **
 
-MongoDB&reg; can be accessed on the following DNS name(s) and ports from within your cluster:
-
-    mongo-mongodb.default.svc.cluster.local
-
-To get the root password run:
-
-    export MONGODB_ROOT_PASSWORD=$(kubectl get secret --namespace default mongo-mongodb -o jsonpath="{.data.mongodb-root-password}" | base64 -d)
-
-To get the password for "my-user" run:
-
-    export MONGODB_PASSWORD=$(kubectl get secret --namespace default mongo-mongodb -o jsonpath="{.data.mongodb-passwords}" | base64 -d | awk -F',' '{print $1}')
-
-To connect to your database, create a MongoDB&reg; client container:
-
-    kubectl run --namespace default mongo-mongodb-client --rm --tty -i --restart='Never' --env="MONGODB_ROOT_PASSWORD=$MONGODB_ROOT_PASSWORD" --image docker.io/bitnami/mongodb:5.0.9-debian-10-r11 --command -- bash
-
-Then, run the following command:
-    mongosh admin --host "mongo-mongodb" --authenticationDatabase admin -u root -p $MONGODB_ROOT_PASSWORD
+The hostname of mongo will be : `mongo-mongodb.default.svc.cluster.local`
 
 To connect to your database from outside the cluster execute the following commands:
-
-    kubectl port-forward --namespace default svc/mongo-mongodb 27017:27017 &
-    mongosh --host 127.0.0.1 --authenticationDatabase admin -p secretpassword
+```
+kubectl port-forward --namespace default svc/mongo-mongodb 27018:27017
+mongosh --host 127.0.0.1 --port 27018 --authenticationDatabase admin -p secretpassword
 ```
 
-La chart `bitnami/mongo` crée :
+La chart crée :
  - Deployment
  - Pods
  - Replicaset
