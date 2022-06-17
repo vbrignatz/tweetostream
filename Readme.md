@@ -62,11 +62,28 @@ kafka-topics.sh --create --topic twitto  --bootstrap-server localhost:9092
 kafka-topics.sh --list --bootstrap-server localhost:9092
 ```
 
+Create the topic `twitto1` :
+```
+kafka-topics.sh --create --topic twitto1  --bootstrap-server localhost:9092
+kafka-topics.sh --list --bootstrap-server localhost:9092
+```
+
+
 To create a simple consumer and producer :
 ```
 kafka-console-producer.sh --topic twitto --bootstrap-server localhost:9092
 kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic twitto --from-beginning
 ```
+kafka-console-producer.sh --topic twitto1 --bootstrap-server localhost:9092
+kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic twitto --from-beginning
+
+```
+
+DAG OPERATION :
+```
+spark-submit --packages org.mongodb.spark:mongo-spark-connector_2.11:2.4.4 --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.0 --master local[2] streambyspark.py 
+
+
 
 # MongoDB
 
